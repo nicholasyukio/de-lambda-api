@@ -33,6 +33,8 @@ jobs:
         pip install zappa
 
     - name: Deploy com Zappa
+      env:
+        ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
       run: |
         source venv/bin/activate
         zappa update production
