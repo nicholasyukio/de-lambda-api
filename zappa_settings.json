@@ -2,7 +2,6 @@
     "production": {
       "app_function": "app.app",
       "aws_region": "sa-east-1",
-      "profile_name": "default",
       "project_name": "de-lambda-api",
       "runtime": "python3.9",
       "s3_bucket": "zappa-deploys-nicholasyukio"
