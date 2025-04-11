@@ -29,10 +29,8 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: sa-east-1
 
-    - name: Deploy com Zappa (modo verboso)
+    - name: Deploy com Zappa
       run: |
         set -e
-        echo "Zappa version:"
-        zappa --version
-        echo "Executando: zappa update production"
-        zappa update production --log-level DEBUG
+        set -x
+        zappa update production
