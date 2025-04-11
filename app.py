@@ -8,6 +8,7 @@ load_dotenv()
 app = Flask(__name__)
 
 #ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY")
+ASAAS_API_KEY = ""
 ASAAS_BASE_URL = "https://api-sandbox.asaas.com/v3"
 
 
