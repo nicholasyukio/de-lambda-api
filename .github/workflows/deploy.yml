@@ -17,11 +17,6 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Instalar dependências
-      run: |
-        pip install -r requirements.txt
-        pip install zappa
-
     - name: Configurar credenciais AWS
       uses: aws-actions/configure-aws-credentials@v3
       with:
@@ -29,8 +24,15 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: sa-east-1
 
+    - name: Criar e ativar virtualenv
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install zappa
+
     - name: Deploy com Zappa
       run: |
-        set -e
-        set -x
+        source venv/bin/activate
         zappa update production
