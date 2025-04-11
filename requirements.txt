@@ -1,2 +1,4 @@
 Flask==2.2.5
 zappa==0.56.0
+werkzeug==2.2.3
+

@@ -1,0 +1,39 @@
+# Ambientes virtuais
+venv/
+.env/
+.venv/
+
+# Bytecode Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Zappa artifacts
+.zappa/
+*.zip
+
+# Arquivos de log
+*.log
+
+# Credenciais e configs locais
+*.env
+.env.*
+zappa_settings.json
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Test coverage
+htmlcov/
+.tox/
+coverage.xml
+.cache/
+
+# Pipenv
+Pipfile.lock
