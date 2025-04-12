@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 import requests
 import os
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 is_local = os.path.exists('.env')
 
