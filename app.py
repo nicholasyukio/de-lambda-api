@@ -2,8 +2,12 @@ from flask import Flask, jsonify, request
 import requests
 import os
 from datetime import datetime, timedelta
-#from dotenv import load_dotenv
-#load_dotenv()
+from dotenv import load_dotenv
+
+is_local = os.path.exists('.env')
+
+if is_local:
+    load_dotenv()  # Carrega variáveis do .env
 
 app = Flask(__name__)
 
