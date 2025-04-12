@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 is_local = os.path.exists('.env')
 
 if is_local:
-    load_dotenv()  # Carrega variáveis do .env
+    pass
+    #load_dotenv()  # Carrega variáveis do .env
 
 app = Flask(__name__)
 
