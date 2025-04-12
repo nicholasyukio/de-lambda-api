@@ -18,7 +18,7 @@ ASAAS_BASE_URL = "https://api-sandbox.asaas.com/v3"
 
 @app.route("/")
 def home():
-    return jsonify({"message": "API is running !!## ({GREETING})"})
+    return jsonify({"message": "API is running !!## "+GREETING})
 
 
 """@app.route("/create-pix-charge", methods=["POST"])
