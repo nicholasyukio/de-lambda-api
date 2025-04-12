@@ -40,3 +40,4 @@ coverage.xml
 
 # Pipenv
 Pipfile.lock
+zappa_settings.json
