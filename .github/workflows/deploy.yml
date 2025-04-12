@@ -52,4 +52,4 @@ jobs:
         ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
       run: |
         source venv/bin/activate
-        zappa update productionE
+        zappa update production
