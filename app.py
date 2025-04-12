@@ -21,7 +21,7 @@ def home():
     return jsonify({"message": "API is running !!## "+GREETING})
 
 
-"""@app.route("/create-pix-charge", methods=["POST"])
+@app.route("/create-pix-charge", methods=["POST"])
 def create_pix_charge():
     # Get client data from request
     data = request.json
@@ -107,7 +107,7 @@ def create_pix_payment(customer_id, value):
         return response.json()
     else:
         print("Error creating PIX charge:", response.text)
-        return None"""
+        return None
 
 
 if __name__ == "__main__":
