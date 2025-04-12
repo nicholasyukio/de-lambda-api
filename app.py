@@ -2,24 +2,23 @@ from flask import Flask, jsonify, request
 import requests
 import os
 from datetime import datetime, timedelta
-#from dotenv import load_dotenv
 
 is_local = os.path.exists('.env')
 
 if is_local:
-    pass
-    #load_dotenv()  # Carrega variáveis do .env
+    from dotenv import load_dotenv
+    load_dotenv()  # Load .env
 
 app = Flask(__name__)
 
-ASAAS_API_KEY = ""
-#ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY")
+ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY")
+GREETING = os.environ.get("GREETING")
 ASAAS_BASE_URL = "https://api-sandbox.asaas.com/v3"
 
 
 @app.route("/")
 def home():
-    return jsonify({"message": "API is running !!##"})
+    return jsonify({"message": "API is running !!## ({GREETING})"})
 
 
 """@app.route("/create-pix-charge", methods=["POST"])
