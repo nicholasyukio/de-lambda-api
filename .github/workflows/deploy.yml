@@ -32,8 +32,24 @@ jobs:
         pip install -r requirements.txt
         pip install zappa
 
+    - name: Gerar zappa_settings.json
+      run: |
+        echo '{
+          "production": {
+            "app_function": "app.app",
+            "aws_region": "sa-east-1",
+            "project_name": "de-lambda-api",
+            "runtime": "python3.9",
+            "s3_bucket": "zappa-deploys-nicholasyukio",
+            "environment_variables": {
+              "ASAAS_API_KEY": "$ASAAS_API_KEY"
+            }
+          }
+        }' > zappa_settings.json
+
     - name: Deploy com Zappa
+      env:
+        ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
       run: |
         source venv/bin/activate
-        export ASAAS_API_KEY=${{ secrets.ASAAS_API_KEY }}
-        zappa update production
+        zappa update productionE
