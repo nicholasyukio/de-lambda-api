@@ -1,8 +1,11 @@
 import requests
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+is_local = os.path.exists('.env')
+
+if is_local:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load .env
 
 def enroll_student(fullname, email, default_password):
     response_status = ""
