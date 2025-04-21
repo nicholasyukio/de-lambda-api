@@ -1,5 +1,8 @@
 import boto3
 import os
+from datetime import datetime
+from botocore.exceptions import ClientError
+from decimal import Decimal
 
 is_local = os.path.exists('.env')
 
@@ -24,73 +27,126 @@ TABLE_NAME = "Pix-payments-DE"
 # Get table object
 table = dynamodb.Table(TABLE_NAME)
 
-# Create the table (only needs to be done once)
 def create_table():
     try:
-        table = dynamodb.create_table(
+        dynamodb.create_table(
             TableName=TABLE_NAME,
             KeySchema=[
-                {
-                    'AttributeName': 'pix_id',
-                    'KeyType': 'HASH'  # Partition key
-                }
+                {'AttributeName': 'customer_id', 'KeyType': 'HASH'}
             ],
             AttributeDefinitions=[
-                {
-                    'AttributeName': 'pix_id',
-                    'AttributeType': 'S'  # String
-                }
+                {'AttributeName': 'customer_id', 'AttributeType': 'S'}
             ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 1,
-                'WriteCapacityUnits': 1
+            BillingMode='PAY_PER_REQUEST'
+        )
+        print("Table creation initiated.")
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ResourceInUseException':
+            print("Table already exists.")
+        else:
+            raise
+
+def register_pix_payment(customer_id, pix_id, amount):
+    try:
+        timestamp = datetime.utcnow().isoformat()
+        response = table.get_item(Key={'customer_id': customer_id})
+        item_exists = 'Item' in response
+
+        if not item_exists:
+            # Cria o item com 'last_payment_id'
+            table.put_item(Item={
+                'customer_id': customer_id,
+                'last_payment_id': pix_id,
+                'payments': {
+                    pix_id: {
+                        'status': 'pending',
+                        'amount': Decimal(str(amount)),
+                        'timestamp': timestamp
+                    }
+                }
+            })
+            print(f"Customer {customer_id} created and payment {pix_id} registered.")
+        else:
+            # Atualiza tanto o novo pagamento quanto o campo last_payment_id
+            table.update_item(
+                Key={'customer_id': customer_id},
+                UpdateExpression="SET payments.#pix_id = :payment_data, last_payment_id = :pix_id",
+                ExpressionAttributeNames={
+                    "#pix_id": pix_id
+                },
+                ExpressionAttributeValues={
+                    ":payment_data": {
+                        "status": "pending",
+                        "amount": Decimal(str(amount)),
+                        "timestamp": timestamp
+                    },
+                    ":pix_id": pix_id
+                }
+            )
+            print(f"Payment {pix_id} registered and set as last payment for customer {customer_id}.")
+    except Exception as e:
+        print(f"Error registering payment: {e}")
+
+def check_pix_status(customer_id, pix_id=None):
+    try:
+        response = table.get_item(Key={'customer_id': customer_id})
+        item = response.get('Item')
+
+        if not item:
+            return "Customer not found."
+
+        # Usa o último pagamento se nenhum for especificado
+        if not pix_id:
+            pix_id = item.get('last_payment_id')
+
+        payment = item.get('payments', {}).get(pix_id)
+
+        if payment:
+            return payment.get('status', 'unknown')
+        else:
+            return f"Payment {pix_id} not found for customer {customer_id}."
+    except Exception as e:
+        print(f"Error checking status: {e}")
+        return "Error"
+
+
+def confirm_pix_payment(customer_id, pix_id=None):
+    try:
+        response = table.get_item(Key={'customer_id': customer_id})
+        item = response.get('Item')
+
+        if not item:
+            print("Customer not found.")
+            return
+
+        if not pix_id:
+            pix_id = item.get('last_payment_id')
+
+        if not pix_id or pix_id not in item.get('payments', {}):
+            print(f"Payment {pix_id} not found.")
+            return
+
+        table.update_item(
+            Key={'customer_id': customer_id},
+            UpdateExpression="SET payments.#pix_id.#status = :status",
+            ExpressionAttributeNames={
+                "#pix_id": pix_id,
+                "#status": "status"
+            },
+            ExpressionAttributeValues={
+                ":status": "confirmed"
             }
         )
-        print("Creating table...")
-        table.wait_until_exists()
-        print("Table created successfully.")
+        print(f"Payment {pix_id} confirmed for customer {customer_id}.")
     except Exception as e:
-        print("Error creating table:", e)
+        print(f"Error confirming payment: {e}")
 
-# Register a payment
-def register_pix_payment(pix_id, email):
-    response = table.put_item(
-        Item={
-            'pix_id': pix_id,
-            'email': email,
-            'status': 'pending'
-        }
-    )
-    print("Payment registered.")
-    return response
-
-# Check payment status
-def check_pix_status(pix_id):
-    response = table.get_item(
-        Key={'pix_id': pix_id}
-    )
-    item = response.get('Item')
-    print("Payment info:", item)
-    return item
-
-# Update payment status to 'confirmed'
-def confirm_pix_payment(pix_id):
-    response = table.update_item(
-        Key={'pix_id': pix_id},
-        UpdateExpression='SET #s = :new_status',
-        ExpressionAttributeNames={'#s': 'status'},
-        ExpressionAttributeValues={':new_status': 'confirmed'},
-        ReturnValues="UPDATED_NEW"
-    )
-    print("Payment status updated.")
-    return response
 
 # Example usage
 if __name__ == "__main__":
-    # Uncomment what you want to test
-
     # create_table()
-    # register_pix_payment("123456789", "user@example.com")
-    # check_pix_payment_status("123456789")
-    # confirm_pix_payment("123456789")
+    # register_pix_payment("cliente123", "pix475", 200)
+    # print(check_pix_status("cliente123", "pix315"))
+    # confirm_pix_payment("cliente123")
+    # print(check_pix_status("cliente123", "pix789"))
     pass

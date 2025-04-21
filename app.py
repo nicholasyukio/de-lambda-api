@@ -1,6 +1,8 @@
 from flask import Flask, jsonify, request
 import requests
 import os
+import uuid
+import dynamodb
 from datetime import datetime, timedelta
 from flask_cors import CORS
 
@@ -56,9 +58,12 @@ def create_pix_charge():
 
     # Create PIX charge
     charge_response = create_pix_payment(customer_id, value)
+
     if not charge_response:
         return jsonify({"error": "Failed to create PIX charge"}), 500
 
+    print(charge_response["pixid"])
+    dynamodb.register_pix_payment(customer_id, charge_response["pixid"], value)
     return jsonify(charge_response)
 
 @app.route("/create-card-charge", methods=["POST"])
@@ -140,9 +145,10 @@ def webhook_asaas():
     print("Received webhook: ", data)
     event_type = data.get("event")
     payment = data.get("payment", {})
-    payment_id = payment.get("id")
+    customer_id = payment.get("customer")
     status = payment.get("status")
-    external_reference = payment.get("externalReference")
+    if event_type == "PAYMENT_RECEIVED":
+        dynamodb.confirm_pix_payment(customer_id)
     return jsonify({"received": True}), 200
 
 
@@ -228,7 +234,7 @@ def create_pix_payment(customer_id, value):
 
     payload = {
         "addressKey": address_key,
-        "description": "Checkout payment",
+        "description": "Curso Domínio Elétrico",
         "value": value,
         "format": "ALL",
         "expirationDate": expiration_date,
@@ -246,7 +252,9 @@ def create_pix_payment(customer_id, value):
     response = requests.post(url, json=payload, headers=headers)
 
     if response.status_code == 200:
-        return response.json()
+        data = response.json()
+        data["pixid"] = str(uuid.uuid4())
+        return data
     else:
         print("Error creating PIX charge:", response.text)
         return None
