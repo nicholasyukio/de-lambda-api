@@ -1,4 +1,6 @@
 Flask==2.2.5
 zappa==0.56.0
 werkzeug==2.2.3
+requests==2.31.0
+flask-cors==3.0.10
 
