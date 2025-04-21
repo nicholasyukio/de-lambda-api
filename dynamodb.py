@@ -11,9 +11,9 @@ if is_local:
 
 # Initialize boto3 session with credentials from .env
 session = boto3.Session(
-    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    region_name=os.getenv("AWS_REGION")
+    aws_access_key_id=os.getenv("BOTO_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("BOTO_SECRET_ACCESS_KEY"),
+    region_name=os.getenv("BOTO_REGION")
 )
 
 # DynamoDB resource
@@ -90,7 +90,7 @@ def confirm_pix_payment(pix_id):
 if __name__ == "__main__":
     # Uncomment what you want to test
 
-    create_table()
+    # create_table()
     # register_pix_payment("123456789", "user@example.com")
     # check_pix_payment_status("123456789")
     # confirm_pix_payment("123456789")
