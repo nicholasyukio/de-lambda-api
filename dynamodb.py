@@ -8,6 +8,22 @@ if is_local:
     from dotenv import load_dotenv
     load_dotenv()
 
+# Initialize boto3 session with credentials from .env
+session = boto3.Session(
+    aws_access_key_id=os.getenv("BOTO_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("BOTO_SECRET_ACCESS_KEY"),
+    region_name=os.getenv("BOTO_REGION")
+)
+
+# DynamoDB resource
+dynamodb = session.resource('dynamodb')
+
+# Table name (change if needed)
+TABLE_NAME = "Pix-payments-DE"
+
+# Get table object
+table = dynamodb.Table(TABLE_NAME)
+
 # Create the table (only needs to be done once)
 def create_table():
     try:
@@ -71,22 +87,6 @@ def confirm_pix_payment(pix_id):
 
 # Example usage
 if __name__ == "__main__":
-
-    # Initialize boto3 session with credentials from .env
-    session = boto3.Session(
-        aws_access_key_id=os.getenv("BOTO_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("BOTO_SECRET_ACCESS_KEY"),
-        region_name=os.getenv("BOTO_REGION")
-    )
-
-    # DynamoDB resource
-    dynamodb = session.resource('dynamodb')
-
-    # Table name (change if needed)
-    TABLE_NAME = "Pix-payments-DE"
-
-    # Get table object
-    table = dynamodb.Table(TABLE_NAME)
     # Uncomment what you want to test
 
     # create_table()
