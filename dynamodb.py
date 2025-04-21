@@ -1,6 +1,5 @@
 import boto3
 import os
-from dotenv import load_dotenv
 
 is_local = os.path.exists('.env')
 
