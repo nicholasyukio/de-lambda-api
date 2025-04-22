@@ -1,8 +1,11 @@
 import requests
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+is_local = os.path.exists('.env')
+
+if is_local:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load .env
 
 brevo_api_key = os.getenv("BREVO_API_KEY")
 default_password = os.getenv("MOODLE_DE_DEFAULT_PASSWORD")
