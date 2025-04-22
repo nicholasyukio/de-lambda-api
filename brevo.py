@@ -126,18 +126,16 @@ def send_email_to_admin(workflow_status):
     <h3>Nova venda do Domínio Elétrico</h3>
     <h4>Dados da venda:</h4>
     <ul>
-        <li><strong>ID:</strong> {workflow_status["order_id"]}</li>
         <li><strong>Nome completo:</strong> {workflow_status["fullname"]}</li>
         <li><strong>Email:</strong> {workflow_status["email"]}</li>
         <li><strong>Forma de pagamento:</strong> {workflow_status["payment_method"]}</li>
-        <li><strong>Valor pago:</strong> {workflow_status["paid_amount"]}</li>
+        <li><strong>Valor pago:</strong> R$ {workflow_status["paid_amount"]}</li>
+        <li><strong>Opção de pagamento:</strong> {workflow_status["payment_option"]}</li>
     </ul>
     <h4>Resultados dos cadastros:</h4>
     <ul>
         <li><strong>Moodle:</strong> {workflow_status["moodle_response_status"]}</li>
-        <li><strong>Mailerlite:</strong> {workflow_status["mailerlite_response_status"]}</li>
         <li><strong>Brevo:</strong> {workflow_status["brevo_response_status"]}</li>
-        <li><strong>Spedy:</strong> {workflow_status["spedy_response_status"]}</li>
     </ul>
     </div>
     </body>

@@ -7,7 +7,7 @@ if is_local:
     from dotenv import load_dotenv
     load_dotenv()  # Load .env
 
-def enroll_student(fullname, email, default_password):
+def enroll_student(fullname, email, initial_password):
     response_status = ""
     # Moodle API endpoint for user creation
     url = 'https://curso.dominioeletrico.com.br/webservice/rest/server.php'
@@ -15,7 +15,7 @@ def enroll_student(fullname, email, default_password):
     # Cohort ID and user ID to add to the cohort
     cohort_id = '2'
     # Course IDs to enroll the user in
-    course_ids = ['2', '3', '4', '5', '6', '7']
+    course_ids = ['2', '3', '4', '5', '6']
     name_parts = fullname.split()
     for i in range(len(name_parts)):
         name_parts[i] = name_parts[i].capitalize()
@@ -29,7 +29,7 @@ def enroll_student(fullname, email, default_password):
         'wsfunction': 'core_user_create_users',
         'moodlewsrestformat': 'json',
         'users[0][username]': email.lower(),
-        'users[0][password]': default_password,
+        'users[0][password]': initial_password,
         'users[0][firstname]': first_name,
         'users[0][lastname]': last_name,
         'users[0][email]': email.lower()

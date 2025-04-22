@@ -3,6 +3,9 @@ import requests
 import os
 import uuid
 import dynamodb
+import moodle
+import brevo
+import random_passwords
 from datetime import datetime, timedelta
 from flask_cors import CORS
 
@@ -11,6 +14,18 @@ is_local = os.path.exists('.env')
 if is_local:
     from dotenv import load_dotenv
     load_dotenv()  # Load .env
+    # In development, uses Sandbox key and base URL for credit card and Prod key and base URL for Pix
+    ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY")
+    ASAAS_API_KEY_PROD = os.environ.get("ASAAS_API_KEY_PROD")
+    ASAAS_BASE_URL = "https://api-sandbox.asaas.com/v3"
+    ASAAS_BASE_URL_PROD = "https://api.asaas.com/v3"
+else:
+    # In production, uses Prod key and base URL for both credit card and Pix
+    ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY_PROD")
+    ASAAS_API_KEY_PROD = os.environ.get("ASAAS_API_KEY_PROD")
+    ASAAS_BASE_URL = "https://api.asaas.com/v3"
+    ASAAS_BASE_URL_PROD = "https://api.asaas.com/v3"
+
 
 app = Flask(__name__)
 
@@ -24,12 +39,7 @@ allowed_origins = [
 
 CORS(app, origins=allowed_origins)
 
-ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY")
-ASAAS_API_KEY_PROD = os.environ.get("ASAAS_API_KEY_PROD")
 GREETING = os.environ.get("GREETING")
-ASAAS_BASE_URL = "https://api-sandbox.asaas.com/v3"
-ASAAS_BASE_URL_PROD = "https://api.asaas.com/v3"
-
 
 @app.route("/")
 def home():
@@ -40,6 +50,37 @@ def debug():
     return jsonify({
         "GREETING": GREETING
     })
+
+@app.route("/enroll-student", methods=["POST"])
+def enroll_student():
+    # Get data from the request
+    data = request.json
+    fullname = data.get("name")
+    name_parts = fullname.split()
+    first_name = name_parts[0].capitalize()
+    email = data.get("email")
+    payment_method = data.get("payment_method")
+    paid_amount = data.get("paid_amount")
+    payment_option = data.get("payment_option")
+    initial_password = random_passwords.generate()
+    workflow_status = {
+        "fullname": fullname,
+        "email": email,
+        "payment_method": payment_method,
+        "paid_amount": f"{paid_amount:.2f}",
+        "payment_option": payment_option,
+        "moodle_response_status": "",
+        "brevo_response_status": ""
+    }
+    workflow_status["moodle_response_status"] = moodle.enroll_student(fullname, email, initial_password)
+    workflow_status["brevo_response_status"] = brevo.send_email_to_client(first_name, email, initial_password)
+    brevo.send_email_to_admin(workflow_status)
+    return_data = {
+        "status": "ok",
+        "email": email,
+        "password": initial_password
+    }
+    return jsonify(return_data), 200
 
 @app.route("/create-pix-charge", methods=["POST"])
 def create_pix_charge():
@@ -123,21 +164,12 @@ def create_card_charge():
 
     return jsonify(charge_response)
 
-@app.route("/verify-payment/<id>")
-def verify_payment(id):
-    if not id:
-        return {"error": "Missing payment ID"}, 400
-    headers = {"accept": "application/json", "access_token": ASAAS_API_KEY_PROD}
-    response = requests.get(
-        f"{ASAAS_BASE_URL_PROD}/payments/{id}/status",
-        headers=headers
-    )
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print("Error verifying payment", response.text)
-        print("Status code: ", response.status_code)
-        return {"error": "Failed to verify payment"}
+@app.route("/verify-payment/<customer_id>")
+def verify_payment(customer_id):
+    if not customer_id:
+        return {"error": "Missing customer_id"}, 400
+    result = dynamodb.check_pix_status(customer_id)
+    return jsonify({"status": result})
     
 @app.route("/webhook-asaas", methods=["POST"])
 def webhook_asaas():
@@ -149,6 +181,7 @@ def webhook_asaas():
     status = payment.get("status")
     if event_type == "PAYMENT_RECEIVED":
         dynamodb.confirm_pix_payment(customer_id)
+        # Here we put the course enrollment part
     return jsonify({"received": True}), 200
 
 
@@ -254,13 +287,14 @@ def create_pix_payment(customer_id, value):
     if response.status_code == 200:
         data = response.json()
         data["pixid"] = str(uuid.uuid4())
+        data["customer_id"] = customer_id
         return data
     else:
         print("Error creating PIX charge:", response.text)
         return None
     
 def create_credit_card_payment(customer_id, value, n_inst, inst_value, creditCard, creditCardHolderInfo, customer_ip):
-    url = "https://api-sandbox.asaas.com/v3/payments/"
+    url = f"{ASAAS_BASE_URL}/payments"
     r = 0.02
 
     # You can get this from your Asaas account
