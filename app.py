@@ -80,6 +80,14 @@ def videoinfo(video_id):
     result = bunny.get_video_info(video_id)
     return jsonify(result)
 
+@app.route("/notify", methods=["POST"])
+def notify():
+    # Get data from the request
+    data = request.json
+    title = data.get("title")
+    message = data.get("message")
+    brevo.send_notify_email_to_admin(title, message)
+    return jsonify({"status": "success"}), 200
 
 @app.route("/enroll-student", methods=["POST"])
 def enroll_student():

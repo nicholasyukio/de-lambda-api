@@ -167,6 +167,70 @@ def send_email_to_admin(workflow_status):
     response = requests.post(url, headers=headers, json=data)
     return response.status_code
 
+def send_notify_email_to_admin(title, message):
+    email_template = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message</title>
+    <style>
+    body {{
+        font-family: Arial, sans-serif;
+    }}
+    .message {{
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 600px;
+        background-color: #f9f9f9;
+    }}
+    .message h3 {{
+        color: #000000;
+    }}
+    .message p {{
+        color: #050505;
+    }}
+    .link {{
+        color: #007bff;
+        text-decoration: none;
+    }}
+    </style>
+    </head>
+    <body>
+
+    <div class="message">
+    <h3>{title}</h3>
+    <p><strong>{message}</strong></p>
+    </div>
+    </body>
+    </html>
+    """
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "api-key": brevo_api_key,
+        "content-type": "application/json"
+    }
+    data = {
+        "sender": {
+            "name": "Nicholas Yukio",
+            "email": "noreply@curso.dominioeletrico.com.br"
+        },
+        "to": [
+            {
+                "email": admin_email,
+                "name": admin_name
+            }
+        ],
+        "subject": f"[Domínio Elétrico] {title}",
+        "htmlContent": email_template
+    }
+    response = requests.post(url, headers=headers, json=data)
+    return response.status_code
+
 def send_lia_event_email_to_admin(data):
     email_template = f"""
     <!DOCTYPE html>
