@@ -6,6 +6,9 @@ import dynamodb
 import moodle
 import brevo
 import random_passwords
+import create_course
+import bunny
+import users
 from datetime import datetime, timedelta
 from flask_cors import CORS
 
@@ -51,6 +54,33 @@ def debug():
         "GREETING": GREETING
     })
 
+@app.route('/courses', methods=['GET'])
+def get_all_courses():
+    courses = create_course.get_all_courses()
+    return jsonify(courses)
+
+# API endpoint to get all course content
+@app.route('/courses/<string:course_id>', methods=['GET'])
+def get_course(course_id):
+    courses = create_course.get_course_data(course_id)
+    return jsonify(courses)
+
+# API endpoint to get a specific lesson
+@app.route('/courses/<string:course_id>/sections/<string:section_id>/lessons/<string:lesson_id>', methods=['GET'])
+def get_lesson(course_id, section_id, lesson_id):
+    print("teste")
+    result = create_course.get_lesson_data(course_id, section_id, lesson_id)
+    print(result)
+    return jsonify(result)
+
+# API endpoint to get video info from Bunny
+@app.route('/videoinfo/<string:video_id>', methods=['GET'])
+def videoinfo(video_id):
+    print("videoinfo")
+    result = bunny.get_video_info(video_id)
+    return jsonify(result)
+
+
 @app.route("/enroll-student", methods=["POST"])
 def enroll_student():
     # Get data from the request
@@ -59,6 +89,7 @@ def enroll_student():
     name_parts = fullname.split()
     first_name = name_parts[0].capitalize()
     email = data.get("email")
+    user_id = data.get("user_id")
     payment_method = data.get("payment_method")
     paid_amount = data.get("paid_amount")
     payment_option = data.get("payment_option")
@@ -74,6 +105,11 @@ def enroll_student():
     }
     workflow_status["moodle_response_status"] = moodle.enroll_student(fullname, email, initial_password)
     workflow_status["brevo_response_status"] = brevo.send_email_to_client(first_name, email, initial_password)
+    if user_id:
+        users.update_user(user_id, {"account_type": "paid"})
+    else:
+        pass
+        # First implement user creation in AWS Cognito
     brevo.send_email_to_admin(workflow_status)
     return_data = {
         "status": "ok",
@@ -184,6 +220,34 @@ def webhook_asaas():
         # Here we put the course enrollment part
     return jsonify({"received": True}), 200
 
+# endpoints for Users
+
+@app.route("/get-user-data/<user_id>")
+def get_user_data(user_id):
+    if not user_id:
+        return {"error": "Missing user_id"}, 400
+    result = users.get_user(user_id)
+    return jsonify(result)
+
+@app.route("/upgrade-account", methods=["POST"])
+def upgrade_account():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    if not user_id:
+        return {"error": "Missing user_id"}, 400
+    result = users.update_user(user_id, {"account_type": "paid"})
+    return jsonify(result)
+
+@app.route("/enroll-user-in-course", methods=["POST"])
+def enroll_user_in_course():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    course_id = data.get("course_id")
+    if not user_id or not course_id:
+        return {"error": "Missing user_id or course_id"}, 400
+    result = users.enroll_user_in_course(user_id, course_id)
+    print(result)
+    return jsonify(result)
 
 def create_or_get_customer_for_pix(name, cpf_cnpj, email, phone):
     # Check if customer already exists
