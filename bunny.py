@@ -1,6 +1,5 @@
 import os
 import requests
-from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
 is_local = os.path.exists('.env')
